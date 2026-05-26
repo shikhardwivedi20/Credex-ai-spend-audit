@@ -1,44 +1,106 @@
 # Reflection
 
-## 1. The hardest bug you hit this week, and how you debugged it
+## 1. The hardest bug I encountered and how I debugged it
 
-The trickiest bug in this build was a frontend/backend mismatch around the shareable audit flow. The original version generated share links by encoding the whole audit input into the URL, which looked convenient, but it quietly violated the product requirement that identifying details be stripped from the public result. Once that became clear, I had to rethink not just the URL shape, but also how the result page, Open Graph preview, and lead capture flow worked together. My first hypothesis was that I could sanitize the payload in-place and keep the encoded URL approach. That quickly fell apart because the public page still needed a stable share identifier, and the email capture flow needed something canonical to reference.
+The hardest issue I encountered was around the shareable audit flow and public URLs.
 
-The better fix was to move to stored public audit records. I introduced a server-side audit creation route, a Supabase storage helper, and a public record type that intentionally omits `companyName`. The debugging process here was less about a crashing error and more about catching an architectural bug before it became locked into the product. What worked was tracing the evaluator requirement through the entire user journey rather than treating it as a metadata tweak.
+In the earlier version, I was generating share links directly from encoded audit data in the URL because it felt like the fastest approach for an MVP. Initially it worked fine technically, but later I realized it created a problem: some identifying information could still end up tied to the public audit result flow, which was not ideal for a shareable public page.
 
-## 2. A decision you reversed mid-week, and what made you reverse it
+At first, I tried sanitizing the payload before encoding it into the URL, but that quickly became messy because the audit page, lead capture flow, and Open Graph sharing all depended on the same structure.
 
-One decision I reversed was keeping the app as a single long landing page with all sections visible at once. At first, that felt efficient: a polished homepage, then the audit form, then the FAQs, all in one scroll. But once I looked at the experience more critically, it felt too much like a template site and not enough like a premium founder tool. It also weakened the information hierarchy. If the navigation promised “Benefits,” “How it works,” and “FAQ,” those links should open distinct destinations rather than just nudging the user down a tall page.
+The better solution was moving public audit storage to Supabase and generating UUID-based public share pages instead. I added a dedicated API route for audit creation and separated the public audit structure from the internal audit state.
 
-I changed course and split those areas into separate routes while letting `/audit` become the actual product flow. That made the site feel more productized and less like a mock landing page. It also simplified the mental model: homepage sells the tool, audit page does the work, public share page closes the loop. The reversal happened because the earlier choice was fast, but it was not aligned with how a launch-ready SaaS product should feel.
+This was less of a “crashing app” bug and more of an architectural issue that became obvious only after testing the full user flow carefully.
 
-## 3. What you would build in week 2 if you had it
+---
 
-Week 2 would be about turning the MVP from “strong evaluation project” into something a real startup team could pilot. The first thing I would add is better pricing model depth for API-direct usage. Right now, the form uses monthly spend as the main input because it is practical, but a more advanced version should optionally let power users enter token mix, request volume, and model family. That would make API savings suggestions much sharper without making the default form harder for typical founders.
+## 2. A decision I reversed during development
 
-Second, I would build analytics and instrumentation. I would want to know audit completion rate, lead capture rate after value is shown, public share rate, and conversion from high-savings audits into consultation requests. That tells us whether the product is mostly an educational calculator, a lead magnet, or a real sales funnel for Credex.
+One decision I changed midway was keeping everything on a single scrolling landing page.
 
-Third, I would tighten the backend posture: row-level access patterns, stronger rate limiting, and maybe a job queue for email and summary generation. Finally, I would improve the public result page so it looks even more screenshot-worthy, with clearer tool-by-tool storytelling and stronger social sharing polish.
+Initially I combined:
+- homepage content
+- benefits
+- FAQ
+- audit form
 
-## 4. How you used AI tools
+all into one long page because it was faster to build.
 
-AI was useful in the parts of the project where speed and synthesis mattered more than authority. I used AI assistance mainly for UI iteration, copy phrasing, and structural code drafting. It was good at helping generate candidate layouts, refactor repetitive component scaffolding, and rephrase product messaging into a more polished founder-facing tone. It was also useful for thinking through alternate folder structures and surfacing trade-offs quickly.
+But after using the app more, it started feeling more like a generic landing page template instead of an actual product experience.
 
-What I did not trust AI with was the financial logic itself. The audit engine deliberately stays deterministic because evaluator requirements and user trust both depend on defensible reasoning. I also did not trust AI to “remember” current vendor pricing without verification. One specific place the AI was wrong was around plan naming and pricing equivalence: it treated older and newer vendor labels too loosely, especially around ChatGPT Team versus ChatGPT Business and around exact tier mappings for some tools. I caught that by checking the official pricing sources and then restructuring the pricing config so the app could preserve evaluator wording while still documenting the current vendor naming reality.
+So I separated the flows into cleaner routes:
+- homepage
+- audit flow
+- public share page
+
+That made the app feel much more focused and product-oriented.
+
+The `/audit` route especially became cleaner once it was treated like the main product workflow instead of just another section inside a long marketing page.
+
+---
+
+## 3. What I would improve in a second iteration
+
+If I continued this project further, the first thing I would improve would be API usage analysis.
+
+Right now, the app mainly uses monthly spend as the primary input because most startup teams know their billing numbers more easily than token-level usage details.
+
+A more advanced version could optionally support:
+- token usage analysis
+- request volume estimates
+- model-level API cost comparisons
+
+I would also add:
+- better analytics
+- audit completion tracking
+- public share tracking
+- stronger rate limiting
+- better email delivery infrastructure
+
+Another improvement would be making the public result page more visual and easier to screenshot/share.
+
+---
+
+## 4. How I used AI tools during development
+
+AI tools were mainly useful for speeding up iteration during development.
+
+I used them for:
+- brainstorming UI layouts
+- restructuring components
+- improving wording and copy
+- debugging repetitive issues faster
+- generating alternative implementation ideas
+
+However, I intentionally kept the audit engine itself deterministic and rule-based.
+
+I did not want pricing recommendations to depend directly on LLM output because:
+- recommendations should stay explainable
+- pricing logic should remain testable
+- financial suggestions should stay predictable
+
+One place where AI suggestions were unreliable was around current pricing tiers and naming consistency across vendors. I noticed some mismatches between older and newer plan names while testing the pricing configuration, so I verified those manually using official pricing pages before updating the final configuration.
+
+---
 
 ## 5. Self-rating
 
-**Discipline: 7/10**  
-The product and docs are moving in the right direction, but the missing real 7-day git history is a serious gap that should have been managed earlier.
+### Discipline — 7/10
 
-**Code quality: 8/10**  
-The core audit logic is now typed, test-covered, and separated cleanly from UI and AI summary generation.
+I think I managed the MVP scope reasonably well and focused on finishing the core flow instead of endlessly adding features.
 
-**Design sense: 7/10**  
-The interface is cleaner and more product-like now, especially after separating the landing and audit flows, though there is still room to raise the visual polish further.
+### Code quality — 8/10
 
-**Problem solving: 8/10**  
-The strongest work this week was catching architectural requirement mismatches early enough to change direction cleanly.
+The audit logic is separated cleanly from the UI layer, and most of the important flows are typed and modular.
 
-**Entrepreneurial thinking: 7/10**  
-The product is now more aligned with how Credex could actually use it, but the go-to-market and interview evidence still need real-world validation.
+### Design sense — 7/10
+
+The UI became much cleaner after separating the audit flow from the landing experience, although there is still room for better polish and animation consistency.
+
+### Problem solving — 8/10
+
+The strongest part of the project was identifying structural issues early enough to refactor them before deployment.
+
+### Entrepreneurial thinking — 7/10
+
+I tried to think beyond just the coding assignment and shape the project more like a real SaaS workflow instead of only a demo app.
