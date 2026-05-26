@@ -1,19 +1,19 @@
 # Prompts
 
-The audit engine itself is deterministic. The only AI-generated part of the product is the personalized summary paragraph shown after the audit result is already computed.
+The audit calculations and recommendations in this project are fully deterministic. AI is only used to generate a short personalized summary after the audit result is already computed.
 
 ## System prompt
 
 ```text
-You write premium but grounded SaaS audit summaries for founders and finance-minded operators.
+You generate short SaaS audit summaries for founders and small technical teams.
 
-Rules:
-- Personalize only from the audit facts provided.
-- Do not invent prices, vendors, savings, seats, or usage.
-- Do not change the deterministic recommendation logic.
-- Keep the tone calm, technical, and trustworthy.
-- Write one paragraph of roughly 90 to 120 words.
-- If the audit shows limited savings, say so clearly and honestly.
+Guidelines:
+- Use only the audit data provided.
+- Do not invent pricing, vendors, savings, or recommendations.
+- Do not modify the existing audit logic.
+- Keep the tone professional, clear, and trustworthy.
+- Write a single paragraph between 90 and 120 words.
+- If savings are low or the stack already looks optimized, say that honestly.
 ```
 
 ## User prompt template
@@ -24,36 +24,62 @@ Monthly AI spend: {{monthlySpend}}
 Estimated monthly savings: {{estimatedMonthlySavings}}
 Savings rate: {{savingsRate}}%
 Audit posture: {{posture}}
+
 Recommendations:
 {{recommendations}}
 
-Write one paragraph around 100 words.
+Generate a concise personalized summary paragraph.
 ```
 
-## Why I wrote it this way
+## Prompt design decisions
 
-The prompt is intentionally narrow because the evaluator explicitly wants the financial reasoning to remain deterministic. The model is given only the facts needed to summarize the result and is directly told not to invent new math, vendors, or recommendations. I also made the tone instruction specific: calm, technical, and trustworthy. That matters because a founder-facing savings audit should read like a good operator wrote it, not like a hypey chatbot trying to impress someone.
+I intentionally kept the prompt narrow and structured because the assignment specifically mentioned that the financial reasoning should remain deterministic.
 
-The length constraint exists because long summaries dilute the actual recommendations. A ~100-word paragraph is enough to personalize the audit while keeping the product scannable and screenshot-friendly.
+The AI model is not responsible for:
+- pricing calculations
+- recommendation generation
+- savings estimation
+- plan comparison logic
 
-## What I tried that did not work
+Those parts are handled entirely inside the audit engine.
 
-1. **Very short 2-sentence prompts**  
-   These produced summaries that were compact, but often too generic and emotionally flat.
+The model only receives the final audit output and turns it into a more readable founder-facing summary.
 
-2. **Open-ended “sound premium” wording without hard constraints**  
-   That made the model more likely to embellish the confidence level or imply certainty beyond the deterministic audit result.
+I also added explicit instructions preventing the model from inventing:
+- pricing numbers
+- additional vendors
+- unsupported claims
+- exaggerated confidence
 
-3. **Long recommendation dumps with too much raw detail**  
-   This made the summary noisy and repetitive instead of sharp.
+This helped keep the summaries more reliable and consistent with the actual audit results.
 
-The current version is the compromise: enough structure to stop invention, enough room to sound human.
+The summary length was also intentionally limited so the result page stays easy to scan and share.
+
+---
+
+## Prompt iterations that did not work well
+
+### 1. Very short prompts
+
+Earlier versions used only a few instructions and produced summaries that felt too generic and repetitive.
+
+### 2. Open-ended “marketing style” prompts
+
+Allowing the model too much freedom sometimes caused exaggerated wording or overly confident recommendations that did not match the deterministic audit output.
+
+### 3. Large raw recommendation dumps
+
+Passing too much detail into the prompt made the summaries noisy and harder to read.
+
+The final version is more constrained, which produced cleaner and more reliable outputs during testing.
+
+---
 
 ## Failure handling
 
-If Anthropic is unavailable or returns an error:
+If the configured AI provider fails or times out:
 
-1. Fall back to the next configured provider if available.
-2. Otherwise return the deterministic summary from `lib/audit/engine.ts`.
+1. The app attempts the next configured provider if available.
+2. If no provider succeeds, the app falls back to a deterministic template summary.
 
-This keeps the app usable even when the AI provider fails.
+This keeps the audit flow usable even if external AI services are unavailable.
