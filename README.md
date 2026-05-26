@@ -2,16 +2,9 @@
 
 Credex AI Spend Audit is a founder-focused SaaS web app that helps startup teams evaluate whether they are overspending on AI subscriptions, seats, and API usage. It is built for operators, finance-minded founders, and engineering leaders who want defensible savings recommendations instead of fuzzy AI advice.
 
-## Demo assets
-
-- Screenshot 1: add a homepage screenshot here before submission
-- Screenshot 2: add an audit form screenshot here before submission
-- Screenshot 3: add a results/share page screenshot here before submission
-- Optional screen recording: add a 30-second Loom or YouTube link here before submission
-
 ## Deployed URL
 
-- Replace with live URL before submission: `https://your-vercel-url.vercel.app`
+- Replace with live URL before submission: `https://credexspend.vercel.app/`
 
 ## Quick start
 
@@ -74,10 +67,9 @@ For the full launch checklist, use [DEPLOYMENT.md](C:/Users/shikh/OneDrive/Docum
 
 ## Submission note
 
-This repo still needs three real-world submission inputs before it is actually safe to submit:
+A few practical tradeoffs were made during development:
 
-- a real public GitHub URL
-- a real deployed production URL
-- real screenshots or a real screen recording
-
-The app code, docs, tests, and CI scaffolding are in place, but those external deliverables cannot be invented locally.
+- The infrastructure was intentionally kept lightweight for faster iteration.
+- Form state is stored locally to improve UX during longer audit sessions.
+- AI provider support was kept flexible to allow switching providers during testing.
+- Transactional email delivery works best with a verified sender domain.
